@@ -6,7 +6,6 @@
 
 ## 开发环境
 
-- 云服务器ECS（2核 2G 1M宽带）
 - Linux version 3.10.0（CentOS 7.9 64位）
 - gcc version 4.8.5
 - cmake version 2.8.12.2
@@ -22,5 +21,95 @@ cd ./example
 make
 ./testserver
 
+```
+
+## mymuduo网络库的核心代码模块
+
+### Reactor模型
+
+### ![Reactor](D:\temp\images\Reactors.png)
+
+### Channel
+
+------
+
+Channel理解为通道，封装了sockfd和其感兴趣的event，例如EPOLLIN、EPOLLOUT事件，还绑定了poller返回的具体事件,注册到Poller的channelmap中，还有其回调函数对象，sockfd就是要往epoll上注册的文件描述符。总共有两种channel，listenfd->acceptorChannel，connfd->connectionChannel。回调函数对应着事件处理器EventHandler。
+
+### Poller和EPollPoller
+
+------
+
+Poller和EPollPoller对应着Reactor模型中的Demultiplex事件分发器。
+
+Poller : map的key:sockfd value:channel所属的channel通道类型，可以通过sockfd找到channel来调用相应的回调函数。
+
+EPollPoller:重写基类Poller的抽象方法，将channel上的Event事件注册和更新到epoll树上，开启事件循环epoll_wait。
+
+### EventLoop
+
+------
+
+EventLoop对应着Reactor模型中的Reactor反应堆
+
+Reactor反应堆含有channel列表、wakeupFd、wakeupFdChannel。一个wakeupFd对应着一个loop，每一个wakeupFd封装成了wakeupChannel注册到Demultiplex事件分发器。要想唤醒线程可以通过loop对象获取wakeFd，往wakeFd写一点东西就可以唤醒阻塞线程。
+
+### Thread和EventLoopThread
+
+------
+
+EventLoopThread对应着事件线程
+
+### EventLoopThreadPool
+
+------
+
+EventLoopThreadPool为事件循环线程池，可以通过轮询算法获取下一个subloop，如果没有设置线程数量就只会调用baseLoop
+
+一个线程对应着一个loop -> one loop per thread
+
+### Socket
+
+------
+
+封装socket fd
+
+### Acceptor
+
+------
+
+主要封装了listenfd相关的操作 socket bind listen 发生在 baseLoop
+
+### Buffer
+
+------
+
+缓冲区 应用写数据 -> 缓冲区 -> Tcp发送缓冲区 -> send
+
+### TcpConnection
+
+------
+
+一个连接成功的客户端对应一个TcpConnection 封装了Socket，Channel，各种回调，发送和接收缓冲区
+
+### TcpServer
+
+------
+
+封装了Acceptor，EventLoopThreadPool，ConnectionMap。
+
+### muduo使用的模型
+
+![image-20230402184145832](D:\temp\images\muduo.png)
+
+以testserver.cpp中的main为例
+
+```c++
+/*EchoServer server(&loop, addr, "EchoServer-01")->调用TcpServer::TcpServer(...)构造函数，而构造函数中的acceptor_(new Acceptor(loop, listenAddr, option == kReusePort))设置了listenfd,bind，setsockoption，setReadCallback(std::bind(&Acceptor::handleRead, this)),listenfd有事件发生了，就是有新用户连接了,调用回调函数(TcpServer::newConnection)，通过轮询算法，选择一个subloop，来管理channel，根据连接成功的sockfd，创建TcpConnection（Tcp的构造对象会创建channel，并设置相关的回调函数）连接对象，然后再通过runInLoop，向poller注册channel的epollin事件。
+
+server.start()->启动底层的loop线程池(根据用户设置的线程数，当线程数为0时由mainLoop运行)->创建loop子线程并开启loop.loop(),loop_>runInLoop(std::bind(&Acceptor::listen, acceptor_.get()))->连接到来时，把acceptorChannel注册到baseLoop上，开启baseLoop.loop()(loop中可以一直执行不让程序结束)
+
+loop.loop()(// 启动mainLoop的底层Poller)
+
+*/
 ```
 
