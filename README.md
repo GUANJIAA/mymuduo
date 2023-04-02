@@ -17,9 +17,10 @@
 # 项目编译执行即可 头文件生成至目录/usr/include/mymuduo/，.so库文件生成至目录/usr/lib/
 sudo ./autobuild.sh
 
-# 测试用例进入example/文件夹，make即可生成服务器测试用例
+# 测试用例进入example/文件夹，make即可生成服务器测试用例,测试用例默认使用地址为127.0.0.1，端口为8000
 cd ./example
 make
 ./testserver
+
 ```
 
