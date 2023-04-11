@@ -34,7 +34,7 @@ make
 
 ### Reactor模型
 
-### ![Reactor](./images\Reactors.png)
+### ![Reactor](./images/Reactors.png)
 
 ### Channel
 
@@ -106,7 +106,7 @@ EventLoopThreadPool为事件循环线程池，可以通过轮询算法获取下�
 
 ### muduo使用的模型
 
-![image-20230402184145832](./images\muduo.png)
+![image-20230402184145832](./images/muduo.png)
 
 以testserver.cpp中的main为例
 
