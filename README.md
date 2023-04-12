@@ -109,14 +109,4 @@ EventLoopThreadPool为事件循环线程池，可以通过轮询算法获取下�
 ![image-20230402184145832](./images/muduo.png)
 
 以testserver.cpp中的main为例
-
-```c++
-/*EchoServer server(&loop, addr, "EchoServer-01")->调用TcpServer::TcpServer(...)构造函数，而构造函数中的acceptor_(new Acceptor(loop, listenAddr, option == kReusePort))设置了listenfd,bind，setsockoption，setReadCallback(std::bind(&Acceptor::handleRead, this)),listenfd有事件发生了，就是有新用户连接了,调用回调函数(TcpServer::newConnection)，通过轮询算法，选择一个subloop，来管理channel，根据连接成功的sockfd，创建TcpConnection（Tcp的构造对象会创建channel，并设置相关的回调函数）连接对象，然后再通过runInLoop，向poller注册channel的epollin事件。
-
-server.start()->启动底层的loop线程池(根据用户设置的线程数，当线程数为0时由mainLoop运行)->创建loop子线程并开启loop.loop(),loop_>runInLoop(std::bind(&Acceptor::listen, acceptor_.get()))->连接到来时，把acceptorChannel注册到baseLoop上，开启baseLoop.loop()(loop中可以一直执行不让程序结束)
-
-loop.loop()(// 启动mainLoop的底层Poller)
-
-*/
-```
-
+![](./images/3.png)
